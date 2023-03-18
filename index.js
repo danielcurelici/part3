@@ -7,8 +7,6 @@ app.use(express.static('build'))
 
 
 app.use(cors())
-console.log();
-
 
 morgan.token('body', function(req, res) {
     return `{"name": "${req.body.name}","number": "${req.body.number}"}`
