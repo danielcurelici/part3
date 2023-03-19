@@ -1,17 +1,16 @@
+require('dotenv').config()
 const express = require('express')
 const morgan = require('morgan')
 const app = express()
 app.use(express.json())
 const cors = require('cors')
 app.use(express.static('build'))
-
-
+const Person = require('./models/note')
 app.use(cors())
 
 morgan.token('body', function(req, res) {
     return `{"name": "${req.body.name}","number": "${req.body.number}"}`
 })
-
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
 let persons = [
@@ -42,9 +41,11 @@ let persons = [
       }
 ]
 
-app.get('/api/persons', (request, response) => {
-    response.json(persons)
-})
+app.get('/api/notes', (request, response) => {
+    Person.find({}).then(persons => {
+      response.json(persons)
+    })
+  })
 
 app.get('/info', (request,response) => {
     response.send(`Phonebook has info for ${persons.length} persons
@@ -67,25 +68,28 @@ const generateId = (min, max) => {
     max = Math.floor(max);
     return Math.floor(Math.random() * (max - min + 1) + min)
 }
-app.post('/api/persons', (request, response) => {
-    const body = request.body
 
+app.post('/api/persons', (request, response) => {
+    const body = request.body;
+    
     if(!body.name)
         response.status(400).end('name is missing')
     if(!body.number)
         response.status(400).end('number is missing')
-    if(persons.find(p => p.name === body.name))
+    if(Person.find({name:body.name}))
         response.status(400).end('name already exists')
-    const person = {
-        id: generateId(1, 1000),
-        name: body.name,
-        number: body.number
-    }
-    persons = persons.concat(person)
-    response.json(person)
-})
 
-const PORT = process.env.PORT || 3001
+    const person = new Person({
+      name: body.name,
+      number: body.number,
+    })
+  
+    person.save().then(savedPerson => {
+      response.json(savedPerson)
+    })
+  })
+
+const PORT = process.env.PORT
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
