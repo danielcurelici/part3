@@ -5,7 +5,7 @@ const app = express()
 app.use(express.json())
 const cors = require('cors')
 app.use(express.static('build'))
-const Person = require('./models/note')
+const Person = require('./models/person')
 app.use(cors())
 
 morgan.token('body', function(req, res) {
@@ -21,7 +21,7 @@ let persons = [
     }
 ]
 
-app.get('/api/notes', (request, response) => {
+app.get('/api/persons', (request, response) => {
     Person.find({}).then(persons => {
       response.json(persons)
     })
@@ -53,11 +53,11 @@ app.post('/api/persons', (request, response) => {
     const body = request.body;
 
     if(!body.name)
-        response.status(400).end('name is missing')
+        return response.status(400).end('name is missing')
     if(!body.number)
-        response.status(400).end('number is missing')
+        return response.status(400).end('number is missing')
     if(Person.find({name:body.name}))
-        response.status(400).end('name already exists')
+        return response.status(400).end('name already exists')
 
     const person = new Person({
       name: body.name,
