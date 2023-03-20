@@ -1,15 +1,16 @@
 require('dotenv').config()
 const express = require('express')
 const morgan = require('morgan')
-const app = express()
-app.use(express.json())
+const app = express();
 const cors = require('cors')
 app.use(express.static('build'))
-const Person = require('./models/person')
+app.use(express.json())
 app.use(cors())
 
-morgan.token('body', function(req, res) {
-    return `{"name": "${req.body.name}","number": "${req.body.number}"}`
+const Person = require('./models/person');
+
+morgan.token('body', function(reqest, response) {
+    return `{"name": "${reqest.body.name}","number": "${reqest.body.number}"}`
 })
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
@@ -38,11 +39,20 @@ app.get('/api/persons/:id', (request,response) => {
         response.json(person)
     response.status(404).end('person does not exist')
 })
-app.delete('/api/persons/:id', (request,response) => {
-    const id = Number(request.params.id)
-    persons = persons.filter(p => p.id !== id)
-    response.status(204).end()
+// app.delete('/api/persons/:id', (request,response) => {
+//     const id = Number(request.params.id)
+//     persons = persons.filter(p => p.id !== id)
+//     response.status(204).end()
+// })
+
+app.delete('/api/persons/:id', (request,response,next) => {
+    Person.findByIdAndRemove(request.params.id)
+    .then(result => {
+      response.status(204).end()
+    })
+    .catch(error => next(error))
 })
+
 const generateId = (min, max) => {
     min = Math.ceil(min);
     max = Math.floor(max);
